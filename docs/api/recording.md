@@ -1,6 +1,6 @@
 # Recording
 
-Returned by `runPrompt()`, `runSkill()`, and `session.end()`. Contains everything that happened during the agent run.
+Returned by `.prompt().run()`, `.skill().run()`, and `session.end()`. Contains everything that happened during the agent run.
 
 ## Structure
 

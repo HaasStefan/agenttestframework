@@ -30,24 +30,53 @@ const npm = testbed.spy('npm');
 
 Same name returns the same spy.
 
-## `testbed.runPrompt(prompt)`
+## `testbed.prompt(text)`
+
+Returns a `PromptBuilder` for fluent configuration before running. Call `.run()` to execute. Supports `.onQuestion()` for handling agent questions.
+
+```typescript
+const recording = await testbed.prompt('What files changed?').run();
+
+// With question handling
+const recording = await testbed
+  .prompt('deploy to production')
+  .onQuestion(q => 'yes')
+  .run();
+```
+
+Returns a [Recording](/api/recording).
+
+## `testbed.skill(skillPath, prompt)`
+
+Returns a `PromptBuilder` for fluent skill configuration. Locks the agent to a single skill file. Same chaining API as `.prompt()`.
+
+```typescript
+const recording = await testbed
+  .skill('./skills/deploy.md', 'Deploy to staging')
+  .run();
+
+// With question handling
+const recording = await testbed
+  .skill('./skills/deploy.md', 'deploy to production')
+  .onQuestion(q => {
+    if (q.includes('continue')) return 'yes';
+    return 'no';
+  })
+  .run();
+```
+
+## `testbed.runPrompt(prompt)` / `testbed.runSkill(options)`
+
+Shorthand methods that run immediately without builder chaining. Equivalent to `.prompt(text).run()` and `.skill(path, prompt).run()`. These don't support `.onQuestion()`.
 
 ```typescript
 const recording = await testbed.runPrompt('What files changed?');
-```
 
-Runs the agent with the shimmed `PATH`. Returns a [Recording](/api/recording).
-
-## `testbed.runSkill(options)`
-
-```typescript
 const recording = await testbed.runSkill({
   skill: './skills/deploy.md',
   prompt: 'Deploy to staging',
 });
 ```
-
-Locks the agent to a single skill file.
 
 ## `testbed.startSession()`
 

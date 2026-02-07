@@ -1,6 +1,6 @@
 # Skill Tests
 
-Test a single Copilot skill file in isolation using `runSkill()`. This locks the agent to that skill — it can't use other skills or deviate.
+Test a single Copilot skill file in isolation using `.skill().run()`. This locks the agent to that skill — it can't use other skills or deviate.
 
 ## Basic Skill Test
 
@@ -30,10 +30,9 @@ describe('deploy skill', () => {
     git.withArgs('push').returns({ stdout: 'Everything up-to-date' });
     git.default().returns({ stdout: '' });
 
-    recording = await testbed.runSkill({
-      skill: './skills/deploy.md',
-      prompt: 'Deploy the project',
-    });
+    recording = await testbed
+      .skill('./skills/deploy.md', 'Deploy the project')
+      .run();
   }, 120_000);
 
   afterAll(async () => {
@@ -94,6 +93,20 @@ it('did not call npm install', () => {
 });
 ```
 
+## Handling Questions During Skill Execution
+
+If a skill asks the user a question, use the builder API:
+
+```typescript
+recording = await testbed
+  .skill('./skills/deploy.md', 'Deploy the project')
+  .onQuestion(q => {
+    if (q.includes('continue')) return 'yes';
+    return 'no';
+  })
+  .run();
+```
+
 ## Multiple Skills in One File
 
 Use separate `describe` blocks. Each gets its own `beforeAll` + agent run:
@@ -108,4 +121,4 @@ describe('rollback skill', () => {
 });
 ```
 
-Each `runSkill()` call starts a fresh agent session, so there's no state leaking between blocks.
+Each `.skill().run()` call starts a fresh agent session, so there's no state leaking between blocks.

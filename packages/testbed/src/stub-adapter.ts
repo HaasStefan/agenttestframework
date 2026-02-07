@@ -1,4 +1,4 @@
-import type { AgentAdapter, Recording, Session } from '@agent-test/core';
+import type { AgentAdapter, AgentRunOptions, Recording, Session } from '@agent-test/core';
 import { RecorderImpl } from '@agent-test/recorder';
 
 /**
@@ -8,7 +8,8 @@ import { RecorderImpl } from '@agent-test/recorder';
 export class StubAdapter implements AgentAdapter {
   async runSkill(
     options: { skill: string; prompt: string },
-    _env: Record<string, string>
+    _env: Record<string, string>,
+    _runOptions?: AgentRunOptions,
   ): Promise<Recording> {
     const recorder = RecorderImpl.start();
     recorder.recordPrompt(options.prompt);
@@ -17,7 +18,8 @@ export class StubAdapter implements AgentAdapter {
 
   async runPrompt(
     prompt: string,
-    _env: Record<string, string>
+    _env: Record<string, string>,
+    _runOptions?: AgentRunOptions,
   ): Promise<Recording> {
     const recorder = RecorderImpl.start();
     recorder.recordPrompt(prompt);

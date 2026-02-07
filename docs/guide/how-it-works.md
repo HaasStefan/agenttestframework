@@ -64,9 +64,10 @@ testbed.spy('git')
   ├─ Write /tmp/shims/git executable
   └─ Register spy with the shim server
 
-testbed.runPrompt('...')  or  testbed.runSkill({...})
+testbed.prompt('...').run()  or  testbed.skill('...', '...').run()
   ├─ Build env with shimmed PATH
   ├─ Delegate to adapter (CopilotAdapter, etc.)
+  ├─ Wire onQuestion handler (if provided via .onQuestion())
   ├─ Adapter starts agent session, sends prompt
   ├─ Agent makes tool calls → shims intercept
   │   ├─ Stub match → return stub
@@ -82,7 +83,7 @@ testbed.destroy()
 
 ## Recordings
 
-Every `runPrompt()`, `runSkill()`, or `session.end()` returns a `Recording`:
+Every `.prompt().run()`, `.skill().run()`, or `session.end()` returns a `Recording`:
 
 ```typescript
 {

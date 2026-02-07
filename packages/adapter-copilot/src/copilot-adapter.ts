@@ -1,6 +1,6 @@
 import * as path from 'node:path';
 import { CopilotClient } from '@github/copilot-sdk';
-import type { AgentAdapter, Recording, Session } from '@agent-test/core';
+import type { AgentAdapter, AgentRunOptions, Recording, Session } from '@agent-test/core';
 import { RecorderImpl } from '@agent-test/recorder';
 
 export interface CopilotAdapterOptions {
@@ -29,7 +29,7 @@ export class CopilotAdapter implements AgentAdapter {
     return new CopilotAdapter(client, options);
   }
 
-  async runPrompt(prompt: string, env: Record<string, string>): Promise<Recording> {
+  async runPrompt(prompt: string, env: Record<string, string>, runOptions?: AgentRunOptions): Promise<Recording> {
     const recorder = RecorderImpl.start();
     recorder.recordPrompt(prompt);
 
@@ -37,6 +37,7 @@ export class CopilotAdapter implements AgentAdapter {
       model: this._options.model,
       env,
       hooks: this._createHooks(recorder),
+      ...this._buildQuestionConfig(runOptions),
     } as any);
 
     this._registerTokenTracking(session, recorder);
@@ -50,7 +51,8 @@ export class CopilotAdapter implements AgentAdapter {
 
   async runSkill(
     options: { skill: string; prompt: string },
-    env: Record<string, string>
+    env: Record<string, string>,
+    runOptions?: AgentRunOptions,
   ): Promise<Recording> {
     const recorder = RecorderImpl.start();
     recorder.recordPrompt(options.prompt);
@@ -66,6 +68,7 @@ export class CopilotAdapter implements AgentAdapter {
       availableTools: this._options.availableTools,
       excludedTools: this._options.excludedTools,
       hooks: this._createHooks(recorder),
+      ...this._buildQuestionConfig(runOptions),
     } as any);
 
     this._registerTokenTracking(session, recorder);
@@ -108,6 +111,16 @@ export class CopilotAdapter implements AgentAdapter {
 
   async destroy(): Promise<void> {
     await this._client.stop();
+  }
+
+  private _buildQuestionConfig(runOptions?: AgentRunOptions): Record<string, unknown> {
+    if (!runOptions?.onQuestion) return {};
+    const handler = runOptions.onQuestion;
+    return {
+      onUserInputRequest: async (req: { question: string; choices?: string[] }) => {
+        return handler(req.question, req.choices);
+      },
+    };
   }
 
   private _registerTokenTracking(session: any, recorder: RecorderImpl): void {

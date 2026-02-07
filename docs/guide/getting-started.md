@@ -40,10 +40,9 @@ describe('summarize skill', () => {
     });
     cat.default().returns({ stdout: '', exitCode: 0 });
 
-    recording = await testbed.runSkill({
-      skill: './skills/summarize.md',
-      prompt: 'Summarize README.md',
-    });
+    recording = await testbed
+      .skill('./skills/summarize.md', 'Summarize README.md')
+      .run();
   }, 120_000);
 
   afterAll(async () => {
@@ -76,7 +75,7 @@ npx vitest run tests/summarize.spec.ts
 1. `CopilotAdapter.create()` started the Copilot CLI process
 2. `TestBed.create()` created a temp directory and a shim server
 3. `testbed.spy('cat')` placed an executable `cat` shim in a temp bin dir
-4. `testbed.runSkill()` ran the agent with the shim dir prepended to `PATH` — so when the agent called `cat README.md`, it hit your stub
+4. `.skill().run()` ran the agent with the shim dir prepended to `PATH` — so when the agent called `cat README.md`, it hit your stub
 5. The recording captured the prompt, tool calls, and token usage
 6. You asserted on the recording
 

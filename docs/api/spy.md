@@ -55,7 +55,7 @@ The call is still recorded in `spy.calls` — you get observability without faki
 ```typescript
 const git = testbed.spy('git');
 // No stubs — just observe
-const recording = await testbed.runPrompt('check the repo');
+const recording = await testbed.prompt('check the repo').run();
 // git.calls contains every git command the agent ran, with real output
 ```
 

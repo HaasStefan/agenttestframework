@@ -233,6 +233,72 @@ describe('CopilotAdapter — tool recording via hooks', () => {
   });
 });
 
+describe('CopilotAdapter — onQuestion handler', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should pass onUserInputRequest to session config when onQuestion is provided', async () => {
+    const adapter = await CopilotAdapter.create({});
+    const handler = (q: string) => 'yes';
+
+    await adapter.runPrompt('deploy', { PATH: '/usr/bin' }, { onQuestion: handler });
+
+    const sessionConfig = mockClient.createSession.mock.calls[0][0];
+    expect(sessionConfig.onUserInputRequest).toBeDefined();
+    expect(typeof sessionConfig.onUserInputRequest).toBe('function');
+    await adapter.destroy();
+  });
+
+  it('should not set onUserInputRequest when no onQuestion provided', async () => {
+    const adapter = await CopilotAdapter.create({});
+
+    await adapter.runPrompt('deploy', { PATH: '/usr/bin' });
+
+    const sessionConfig = mockClient.createSession.mock.calls[0][0];
+    expect(sessionConfig.onUserInputRequest).toBeUndefined();
+    await adapter.destroy();
+  });
+
+  it('should delegate onUserInputRequest to the onQuestion handler', async () => {
+    const adapter = await CopilotAdapter.create({});
+    const handler = vi.fn().mockReturnValue('confirmed');
+
+    await adapter.runPrompt('deploy', { PATH: '/usr/bin' }, { onQuestion: handler });
+
+    const sessionConfig = mockClient.createSession.mock.calls[0][0];
+    const answer = await sessionConfig.onUserInputRequest({
+      question: 'Are you sure?',
+      choices: ['yes', 'no'],
+    });
+
+    expect(handler).toHaveBeenCalledWith('Are you sure?', ['yes', 'no']);
+    expect(answer).toBe('confirmed');
+    await adapter.destroy();
+  });
+
+  it('should wire onQuestion for runSkill too', async () => {
+    const adapter = await CopilotAdapter.create({});
+    const handler = vi.fn().mockReturnValue('go ahead');
+
+    await adapter.runSkill(
+      { skill: 'skills/deploy.md', prompt: 'deploy' },
+      { PATH: '/usr/bin' },
+      { onQuestion: handler },
+    );
+
+    const sessionConfig = mockClient.createSession.mock.calls[0][0];
+    expect(sessionConfig.onUserInputRequest).toBeDefined();
+
+    const answer = await sessionConfig.onUserInputRequest({
+      question: 'Continue?',
+    });
+    expect(handler).toHaveBeenCalledWith('Continue?', undefined);
+    expect(answer).toBe('go ahead');
+    await adapter.destroy();
+  });
+});
+
 describe('CopilotAdapter — token usage from events', () => {
   beforeEach(() => {
     vi.clearAllMocks();

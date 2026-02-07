@@ -13,10 +13,11 @@ export type {
   Recording,
   Session,
   AgentAdapter,
+  AgentRunOptions,
 } from '@agent-test/core';
 
 // TestBed
-export { TestBed } from '@agent-test/testbed';
+export { TestBed, PromptBuilder } from '@agent-test/testbed';
 
 // Assertions
 export { setupMatchers } from '@agent-test/assert';

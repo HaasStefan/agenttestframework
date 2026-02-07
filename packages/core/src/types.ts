@@ -112,11 +112,18 @@ export interface Session {
 }
 
 /**
+ * Options passed to adapter run methods (e.g. question handling).
+ */
+export interface AgentRunOptions {
+  onQuestion?: (question: string, choices?: string[]) => string | Promise<string>;
+}
+
+/**
  * Agent adapter interface — implemented by each CLI adapter.
  */
 export interface AgentAdapter {
-  runSkill(options: { skill: string; prompt: string }, env: Record<string, string>): Promise<Recording>;
-  runPrompt(prompt: string, env: Record<string, string>): Promise<Recording>;
+  runSkill(options: { skill: string; prompt: string }, env: Record<string, string>, runOptions?: AgentRunOptions): Promise<Recording>;
+  runPrompt(prompt: string, env: Record<string, string>, runOptions?: AgentRunOptions): Promise<Recording>;
   startSession(env: Record<string, string>): Promise<Session>;
   destroy(): Promise<void>;
 }

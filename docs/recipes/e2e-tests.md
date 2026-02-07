@@ -31,9 +31,9 @@ describe('e2e: agent responds to a prompt', () => {
     });
 
     // No spies — let the agent use real commands
-    recording = await testbed.runPrompt(
-      'What files are in this project?'
-    );
+    recording = await testbed
+      .prompt('What files are in this project?')
+      .run();
   }, 120_000);
 
   afterAll(async () => {

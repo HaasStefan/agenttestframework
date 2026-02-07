@@ -7,10 +7,9 @@ Save recordings to disk and compare them across runs to catch behavioral regress
 ```typescript
 import { RecordingStore } from 'agent-test-framework';
 
-const recording = await testbed.runSkill({
-  skill: './skills/migrate.md',
-  prompt: 'Migrate the database schema',
-});
+const recording = await testbed
+  .skill('./skills/migrate.md', 'Migrate the database schema')
+  .run();
 
 await RecordingStore.save(recording, './recordings');
 // writes ./recordings/<uuid>.json

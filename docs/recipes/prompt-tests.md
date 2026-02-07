@@ -1,6 +1,6 @@
 # Prompt Tests
 
-Test free-form prompts with `runPrompt()`. Unlike `runSkill()`, the agent is not locked to a skill file — it can use any tool.
+Test free-form prompts with `.prompt().run()`. Unlike `.skill()`, the agent is not locked to a skill file — it can use any tool.
 
 ## Basic Prompt Test
 
@@ -29,9 +29,9 @@ describe('git status prompt', () => {
     });
     git.default().returns({ stdout: '' });
 
-    recording = await testbed.runPrompt(
-      'What files have changed? Show me the diff.'
-    );
+    recording = await testbed
+      .prompt('What files have changed? Show me the diff.')
+      .run();
   }, 120_000);
 
   afterAll(async () => {
@@ -101,6 +101,34 @@ git.withArgs('checkout', matching(/^feature\//)).returns({ stdout: '' });
 | `any()` | anything |
 | `anyString()` | any string |
 | `matching(/regex/)` | string matching the regex |
+
+## Handling Agent Questions
+
+Some prompts cause the agent to ask the user a question (e.g. "Are you sure you want to deploy?"). Use the builder API with `.onQuestion()` to provide answers:
+
+```typescript
+recording = await testbed
+  .prompt('Deploy the app to production')
+  .onQuestion((question, choices) => {
+    if (question.includes('Are you sure')) return 'yes';
+    return 'no';
+  })
+  .run();
+```
+
+The handler receives the question text and optional choices array. Return a string answer. Without `.onQuestion()`, agent questions will cause the test to hang.
+
+You can branch on `choices` too:
+
+```typescript
+recording = await testbed
+  .prompt('Set up the project')
+  .onQuestion((question, choices) => {
+    if (choices?.includes('TypeScript')) return 'TypeScript';
+    return 'yes';
+  })
+  .run();
+```
 
 ## Default Fallback
 

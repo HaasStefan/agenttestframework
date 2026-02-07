@@ -5,13 +5,14 @@ Write an adapter to test any CLI agent — Claude Code, OpenAI Codex CLI, or you
 ## The Interface
 
 ```typescript
-import type { AgentAdapter, Recording, Session } from 'agent-test-framework';
+import type { AgentAdapter, AgentRunOptions, Recording, Session } from 'agent-test-framework';
 
 interface AgentAdapter {
-  runPrompt(prompt: string, env: Record<string, string>): Promise<Recording>;
+  runPrompt(prompt: string, env: Record<string, string>, runOptions?: AgentRunOptions): Promise<Recording>;
   runSkill(
     options: { skill: string; prompt: string },
     env: Record<string, string>,
+    runOptions?: AgentRunOptions,
   ): Promise<Recording>;
   startSession(env: Record<string, string>): Promise<Session>;
   destroy(): Promise<void>;
@@ -20,13 +21,15 @@ interface AgentAdapter {
 
 The `env` parameter contains the shimmed `PATH`. Pass it to your agent process so shims intercept CLI calls.
 
+`runOptions` carries optional handlers like `onQuestion` — wire it up if your agent asks the user questions during execution.
+
 ## Example: Spawn-based Adapter
 
 For agents that run as a subprocess:
 
 ```typescript
 import { spawn } from 'node:child_process';
-import type { AgentAdapter, Recording, Session } from 'agent-test-framework';
+import type { AgentAdapter, AgentRunOptions, Recording, Session } from 'agent-test-framework';
 import { RecorderImpl } from 'agent-test-framework';
 
 class SpawnAdapter implements AgentAdapter {
@@ -36,11 +39,20 @@ class SpawnAdapter implements AgentAdapter {
     this._binPath = binPath;
   }
 
-  async runPrompt(prompt: string, env: Record<string, string>): Promise<Recording> {
+  async runPrompt(
+    prompt: string,
+    env: Record<string, string>,
+    runOptions?: AgentRunOptions,
+  ): Promise<Recording> {
     const recorder = RecorderImpl.start();
     recorder.recordPrompt(prompt);
 
     const child = spawn(this._binPath, ['--prompt', prompt], { env });
+
+    // If the agent asks a question, use the handler from runOptions
+    if (runOptions?.onQuestion) {
+      // Wire up your agent's question protocol here
+    }
 
     // Collect output
     let stdout = '';
@@ -63,9 +75,10 @@ class SpawnAdapter implements AgentAdapter {
   async runSkill(
     options: { skill: string; prompt: string },
     env: Record<string, string>,
+    runOptions?: AgentRunOptions,
   ): Promise<Recording> {
     // Pass skill file as a flag, or prepend to prompt — depends on your agent
-    return this.runPrompt(`[skill: ${options.skill}] ${options.prompt}`, env);
+    return this.runPrompt(`[skill: ${options.skill}] ${options.prompt}`, env, runOptions);
   }
 
   async startSession(env: Record<string, string>): Promise<Session> {
@@ -101,7 +114,7 @@ const testbed = await TestBed.create({ adapter });
 const git = testbed.spy('git');
 git.default().returns({ stdout: '' });
 
-const recording = await testbed.runPrompt('check git status');
+const recording = await testbed.prompt('check git status').run();
 ```
 
 ## RecorderImpl API

@@ -72,9 +72,9 @@ const recording = await session.end();
 
 `recording.prompts` contains all prompts in order. `recording.interactions` contains all tool calls from all turns.
 
-## When to Use Sessions vs Separate runPrompt Calls
+## When to Use Sessions vs `.prompt().run()`
 
-| Use sessions when... | Use separate `runPrompt()` when... |
+| Use sessions when... | Use `.prompt().run()` when... |
 |---|---|
 | Second prompt depends on first | Prompts are independent |
 | Testing conversational flow | Testing isolated behaviors |

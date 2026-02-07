@@ -14,4 +14,5 @@ export type {
   Recording,
   Session,
   AgentAdapter,
+  AgentRunOptions,
 } from './types.js';

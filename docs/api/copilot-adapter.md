@@ -31,11 +31,13 @@ const adapter = await CopilotAdapter.create({
 
 ## Methods
 
-### `adapter.runPrompt(prompt, env)`
+### `adapter.runPrompt(prompt, env, runOptions?)`
 
 Sends a free-form prompt to a new session. Returns a [Recording](/api/recording).
 
-### `adapter.runSkill(options, env)`
+The optional `runOptions` parameter accepts an `AgentRunOptions` object. When `onQuestion` is provided, it's wired to the SDK's `onUserInputRequest` callback so the agent can ask the user questions during execution.
+
+### `adapter.runSkill(options, env, runOptions?)`
 
 Sends a prompt locked to a skill file:
 
@@ -44,6 +46,13 @@ await adapter.runSkill({
   skill: './skills/deploy.md',
   prompt: 'Deploy to production',
 }, env);
+
+// With question handling
+await adapter.runSkill(
+  { skill: './skills/deploy.md', prompt: 'Deploy to production' },
+  env,
+  { onQuestion: (q) => 'yes' },
+);
 ```
 
 ### `adapter.startSession(env)`
@@ -53,6 +62,23 @@ Returns a [Session](/api/recording#session) for multi-turn interaction.
 ### `adapter.destroy()`
 
 Stops the Copilot client. Call in `afterAll`.
+
+## Question Handling
+
+When the agent asks a question via the `ask_user` tool, the SDK fires `onUserInputRequest`. The adapter maps this to the `onQuestion` handler from `AgentRunOptions`:
+
+```typescript
+// Via the builder API (preferred)
+const recording = await testbed
+  .prompt('deploy to production')
+  .onQuestion((question, choices) => {
+    if (question.includes('Are you sure')) return 'yes';
+    return 'no';
+  })
+  .run();
+```
+
+The handler receives the question text and an optional `choices` array. Return a string answer.
 
 ## Token Tracking
 

@@ -4,6 +4,7 @@ import * as os from 'node:os';
 import type { AgentAdapter, Recording, Spy, TestBedOptions } from '@agent-test/core';
 import { ShimManager, SpyImpl } from '@agent-test/shims';
 import { StubAdapter } from './stub-adapter.js';
+import { PromptBuilder } from './prompt-builder.js';
 
 export interface TestBedCreateOptions extends TestBedOptions {
   fixturesDir?: string;
@@ -70,6 +71,20 @@ export class TestBed {
     }
     env.PATH = `${this.shimBinDir}${path.delimiter}${env.PATH ?? ''}`;
     return env;
+  }
+
+  /**
+   * Start building a prompt run. Chain .onQuestion() then .run().
+   */
+  prompt(text: string): PromptBuilder {
+    return new PromptBuilder(this._adapter, () => this.getEnv(), text);
+  }
+
+  /**
+   * Start building a skill run. Chain .onQuestion() then .run().
+   */
+  skill(skillPath: string, prompt: string): PromptBuilder {
+    return new PromptBuilder(this._adapter, () => this.getEnv(), prompt, skillPath);
   }
 
   async runSkill(options: { skill: string; prompt: string }): Promise<Recording> {

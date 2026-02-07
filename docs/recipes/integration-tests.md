@@ -54,9 +54,9 @@ describe('code review prompt', () => {
       stdout: 'import jwt from "jsonwebtoken";\n// ... rest of file',
     });
 
-    recording = await testbed.runPrompt(
-      'Review the staged changes. Are there any security issues?'
-    );
+    recording = await testbed
+      .prompt('Review the staged changes. Are there any security issues?')
+      .run();
   }, 120_000);
 
   afterAll(async () => {
