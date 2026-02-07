@@ -137,9 +137,16 @@ Depends on: `@agent-test/core`
 Each adapter translates the framework's generic API into CLI-specific invocations.
 
 **@agent-test/adapter-copilot**
-- Knows how to invoke `github-copilot-cli` with the right flags
-- Parses copilot-specific output for token usage
-- Handles copilot's interactive question format
+
+Uses [`@github/copilot-sdk`](https://github.com/github/copilot-sdk) (npm: `@github/copilot-sdk`) — a programmatic SDK that communicates with the Copilot CLI server via JSON-RPC. No CLI spawning/output parsing needed.
+
+- Creates a `CopilotClient` and manages its lifecycle (start/stop)
+- `runSkill()` → creates a `CopilotSession` with `skillDirectories` pointing at the skill file's directory, `disabledSkills` to disable all others, and `availableTools`/`excludedTools` to restrict tool access. Sends the prompt via `session.sendAndWait()`
+- `runPrompt()` → creates a session with full skill/tool access, sends via `session.sendAndWait()`
+- `startSession()` → creates a long-lived `CopilotSession`, returns a wrapper with `.sendPrompt()` and `.onQuestion()` (mapped to the SDK's `onUserInputRequest` handler)
+- Token usage tracked via session events (`session.compaction_complete`) and model billing info
+- Tool invocations recorded via `onPreToolUse`/`onPostToolUse` hooks for the recorder
+- The session's `workingDirectory` is set to the TestBed's `workDir` (which has the shimmed PATH)
 
 **@agent-test/adapter-claude**
 - Invokes `claude` CLI in non-interactive mode
@@ -153,7 +160,7 @@ Each adapter translates the framework's generic API into CLI-specific invocation
 Each adapter exports:
 - `Agent` implementation conforming to a shared `AgentAdapter` interface from core
 
-Depends on: `@agent-test/core`
+Depends on: `@agent-test/core` + their respective SDK/CLI (`@github/copilot-sdk` for copilot, etc.)
 
 ### agent-test-framework (umbrella)
 
