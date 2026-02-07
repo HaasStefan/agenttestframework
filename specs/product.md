@@ -93,6 +93,8 @@ For testing [Agent Skills](https://platform.claude.com/docs/en/agents-and-tools/
 
 Typical agent unit tests have the goal to make sure an agent skill calls the correct tools, with correct data and to make sure certain tools/commands are NOT invoked. E.g.: to make sure a skill does not call `rm -rf /` or other destructive commands.
 
+`runSkill()` takes a path to a skill file and a prompt. It configures the agent CLI to only load that single skill — no other skills or custom instructions are active. This ensures the test is exercising the skill in isolation.
+
 ### Integration Test Layer
 
 For testing Tool Discovery and effectiveness. For testing if the right Agent Skills and MCP tools are called, and to make sure other tools are not called. Also for testing the interaction between multiple components and ensuring they work together as expected. Also to make sure these prompts act in a token budget and don't regress on the budget.
@@ -143,8 +145,11 @@ describe('commit skill', () => {
     // dynamic or unexpected arguments (e.g. `git log --oneline -5`).
     gitSpy.default().returns({ stdout: '', exitCode: 0 });
 
-    // Act — run once, assert many times below
-    recording = await testbed.runSkill('commit', {
+    // Act — run once, assert many times below.
+    // runSkill() points the agent at a single skill file and locks the agent
+    // to only that skill (no other skills or custom instructions are loaded).
+    recording = await testbed.runSkill({
+      skill: 'skills/commit.md',
       prompt: 'commit the staged changes',
     });
   });
