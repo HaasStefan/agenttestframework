@@ -1,0 +1,29 @@
+{
+  "name": "@agent-test/adapter-copilot",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@agent-test/core": "workspace:*",
+    "@agent-test/recorder": "workspace:*",
+    "@github/copilot-sdk": "^0.1.23"
+  },
+  "devDependencies": {
+    "@agent-test/testbed": "workspace:*",
+    "@agent-test/shims": "workspace:*"
+  },
+  "files": ["dist"]
+}

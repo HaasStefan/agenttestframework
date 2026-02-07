@@ -1,0 +1,29 @@
+{
+  "name": "agent-test-framework",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "source": "./src/index.ts",
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "@agent-test/core": "workspace:*",
+    "@agent-test/shims": "workspace:*",
+    "@agent-test/assert": "workspace:*",
+    "@agent-test/recorder": "workspace:*",
+    "@agent-test/testbed": "workspace:*",
+    "@agent-test/runner": "workspace:*",
+    "@agent-test/adapter-copilot": "workspace:*"
+  },
+  "files": ["dist"]
+}
