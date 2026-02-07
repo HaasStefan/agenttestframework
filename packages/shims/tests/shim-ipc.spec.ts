@@ -50,22 +50,21 @@ describe('Shim IPC — shim script ↔ test process', () => {
     expect(result2.stdout.trim()).toBe('diff output');
   });
 
-  it('should exit with error code when no matching stub and no default', async () => {
+  it('should passthrough to real binary when no matching stub', async () => {
     const manager = await ShimManager.create();
     managers.push(manager);
 
-    const spy = new SpyImpl('git');
-    manager.registerSpy('git', spy);
-    await manager.createShim('git');
+    const spy = new SpyImpl('echo');
+    manager.registerSpy('echo', spy);
+    await manager.createShim('echo');
 
-    try {
-      await execFileAsync(`${manager.binDir}/git`, ['unknown'], {
-        env: { ...process.env, AGENT_TEST_SHIM_DIR: manager.binDir },
-      });
-      expect.fail('Should have exited with non-zero');
-    } catch (err: any) {
-      expect(err.code).not.toBe(0);
-    }
+    const { stdout } = await execFileAsync(`${manager.binDir}/echo`, ['hello', 'passthrough'], {
+      env: { ...process.env },
+    });
+    expect(stdout.trim()).toBe('hello passthrough');
+    // The call was still recorded by the spy
+    expect(spy.calls).toHaveLength(1);
+    expect(spy.calls[0].args).toEqual(['hello', 'passthrough']);
   });
 
   it('should record the shim invocation as a SpyCall', async () => {

@@ -17,9 +17,17 @@ describe('SpyImpl — stub configuration', () => {
     expect(response.stdout).toBe('committed');
   });
 
-  it('should throw when no matching stub and no default', () => {
+  it('should return null (passthrough) when no matching stub and no default', () => {
     const spy = new SpyImpl('git');
-    expect(() => spy.resolve(['unknown'])).toThrow();
+    const response = spy.resolve(['unknown']);
+    expect(response).toBeNull();
+  });
+
+  it('should still record the call on passthrough', () => {
+    const spy = new SpyImpl('git');
+    spy.resolve(['status']);
+    expect(spy.calls).toHaveLength(1);
+    expect(spy.calls[0].args).toEqual(['status']);
   });
 
   it('should use the default stub when no specific match', () => {
@@ -111,6 +119,7 @@ describe('SpyImpl — call recording', () => {
     spy.reset();
 
     expect(spy.calls).toHaveLength(0);
-    expect(() => spy.resolve(['status'])).toThrow();
+    // After reset, no stubs — passthrough (null)
+    expect(spy.resolve(['status'])).toBeNull();
   });
 });

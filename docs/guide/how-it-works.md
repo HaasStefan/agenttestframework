@@ -15,11 +15,40 @@ Your test process
        │
        ├─ OS finds /tmp/shims/git (before /usr/bin/git)
        ├─ Shim sends { name: "git", args: ["status"] } to test process via HTTP
-       ├─ Test process looks up matching stub, returns { stdout: "On branch main..." }
-       └─ Agent sees the stubbed output, continues its work
+       ├─ Test process checks for a matching stub
+       │
+       ├─ If stub found → return stubbed response
+       └─ If no stub   → passthrough to real /usr/bin/git
 ```
 
-The shim is a Node.js script that POSTs to a localhost HTTP server running inside your test process. The test process resolves the stub from your `spy.withArgs(...).returns(...)` configuration and sends it back.
+The shim is a Node.js script that POSTs to a localhost HTTP server running inside your test process. The test process resolves the stub from your `spy.withArgs(...).returns(...)` configuration. If no stub matches and no `.default()` is set, the shim finds the real binary (by searching PATH with its own directory removed) and executes it.
+
+Either way, the call is **recorded** in the spy.
+
+## Passthrough by Default
+
+Spies don't fake anything unless you tell them to:
+
+```typescript
+const git = testbed.spy('git');
+// No stubs configured — all git calls pass through to real git
+// But every call is still recorded in git.calls
+```
+
+Stub only what you need:
+
+```typescript
+git.withArgs('push').returns({ stdout: 'Everything up-to-date' });
+// git push → stubbed
+// git status, git diff, git log, ... → real binary
+```
+
+Set a default to stub everything:
+
+```typescript
+git.default().returns({ stdout: '' });
+// All git calls → stubbed (passthrough disabled)
+```
 
 ## TestBed Lifecycle
 
@@ -39,7 +68,9 @@ testbed.runPrompt('...')  or  testbed.runSkill({...})
   ├─ Build env with shimmed PATH
   ├─ Delegate to adapter (CopilotAdapter, etc.)
   ├─ Adapter starts agent session, sends prompt
-  ├─ Agent makes tool calls → shims intercept → stubs respond
+  ├─ Agent makes tool calls → shims intercept
+  │   ├─ Stub match → return stub
+  │   └─ No match   → passthrough to real binary
   ├─ Adapter records tool calls via hooks
   └─ Returns Recording
 
@@ -74,13 +105,16 @@ Every `runPrompt()`, `runSkill()`, or `session.end()` returns a `Recording`:
 }
 ```
 
-## Spy Resolution
+## Parallel Safety
 
-When a shim fires, the spy resolves the response in this order:
+Each `TestBed.create()` is fully isolated:
 
-1. Check stubs registered with `.withArgs(...)` — first match wins
-2. Fall back to `.default().returns(...)`
-3. If neither exists, throw an error (tells you exactly which args were unmatched)
+- Own temp directory (unique `mkdtemp`)
+- Own shim directory (unique `mkdtemp`)
+- Own HTTP server (random port via `:0`)
+- Own `PATH` (assembled in `getEnv()`, passed per-session)
+
+Two testbeds running in parallel never interfere. Their shim scripts talk to different ports, which resolve stubs from different spy registries.
 
 ## Adapter Role
 

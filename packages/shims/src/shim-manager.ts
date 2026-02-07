@@ -34,10 +34,38 @@ export class ShimManager {
     // The shim script makes an HTTP request to the test process server
     const script = `#!/usr/bin/env node
 import http from 'node:http';
+import { spawnSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { join, delimiter } from 'node:path';
 
 const args = process.argv.slice(2);
 const shimName = '${name}';
+const shimDir = '${this.binDir}';
 const port = ${this._port};
+
+function passthrough() {
+  // Find the real binary by searching PATH without our shim dir
+  const dirs = (process.env.PATH || '').split(delimiter).filter(d => d !== shimDir);
+  let realBin = null;
+  for (const dir of dirs) {
+    const candidate = join(dir, shimName);
+    if (existsSync(candidate)) {
+      realBin = candidate;
+      break;
+    }
+  }
+  if (!realBin) {
+    process.stderr.write('Command not found: ' + shimName + '\\n');
+    process.exit(127);
+  }
+  const result = spawnSync(realBin, args, {
+    stdio: ['inherit', 'pipe', 'pipe'],
+    env: { ...process.env, PATH: dirs.join(delimiter) },
+  });
+  if (result.stdout) process.stdout.write(result.stdout);
+  if (result.stderr) process.stderr.write(result.stderr);
+  process.exit(result.status ?? 1);
+}
 
 const payload = JSON.stringify({ name: shimName, args });
 
@@ -53,6 +81,10 @@ const req = http.request({
   res.on('end', () => {
     try {
       const response = JSON.parse(body);
+      if (response.passthrough) {
+        passthrough();
+        return;
+      }
       if (response.error) {
         process.stderr.write(response.error + '\\n');
         process.exit(1);
@@ -68,8 +100,8 @@ const req = http.request({
 });
 
 req.on('error', (err) => {
-  process.stderr.write('Shim IPC error: ' + err.message + '\\n');
-  process.exit(1);
+  // Server not reachable — passthrough to real binary
+  passthrough();
 });
 
 req.write(payload);
@@ -89,17 +121,18 @@ req.end();
               const { name, args } = JSON.parse(body);
               const spy = this._spies.get(name);
               if (!spy) {
+                // No spy registered — passthrough to real binary
                 res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: `No spy registered for ${name}`, exitCode: 1 }));
+                res.end(JSON.stringify({ passthrough: true }));
                 return;
               }
-              try {
-                const response = spy.resolve(args);
-                res.writeHead(200, { 'Content-Type': 'application/json' });
+              const response = spy.resolve(args);
+              res.writeHead(200, { 'Content-Type': 'application/json' });
+              if (response === null) {
+                // No matching stub — passthrough to real binary
+                res.end(JSON.stringify({ passthrough: true }));
+              } else {
                 res.end(JSON.stringify(response));
-              } catch (err: any) {
-                res.writeHead(200, { 'Content-Type': 'application/json' });
-                res.end(JSON.stringify({ error: err.message, exitCode: 1 }));
               }
             } catch {
               res.writeHead(400, { 'Content-Type': 'application/json' });

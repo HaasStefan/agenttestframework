@@ -34,7 +34,7 @@ export class SpyImpl implements Spy {
     };
   }
 
-  resolve(args: string[]): StubResponse {
+  resolve(args: string[]): StubResponse | null {
     // Find a specific match first
     for (const stub of this._stubs) {
       if (matchArgs(args, stub.pattern)) {
@@ -58,10 +58,13 @@ export class SpyImpl implements Spy {
       return this._defaultResponse;
     }
 
-    throw new Error(
-      `No matching stub for ${this.name} with args: [${args.join(', ')}]. ` +
-      `Configure a stub with .withArgs() or .default().returns()`
-    );
+    // No stub matched — record the call and signal passthrough to real binary
+    this._calls.push({
+      args,
+      timestamp: Date.now(),
+      exitCode: 0,
+    });
+    return null;
   }
 
   get calls(): ReadonlyArray<SpyCall> {
