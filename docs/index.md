@@ -2,6 +2,9 @@
 layout: home
 hero:
   name: Agent Test Framework
+  image:
+    src: /logo.png
+    alt: Agent Test Framework
   tagline: Test your AI agent skills and prompts like you test your code.
   actions:
     - theme: brand
