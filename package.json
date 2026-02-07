@@ -6,11 +6,15 @@
     "build": "pnpm -r run build",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "test:e2e": "vitest run --config tests/e2e/vitest.config.ts"
+    "test:e2e": "vitest run --config tests/e2e/vitest.config.ts",
+    "docs:dev": "vitepress dev docs",
+    "docs:build": "vitepress build docs",
+    "docs:preview": "vitepress preview docs"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",
     "typescript": "^5.7.0",
+    "vitepress": "^1.6.4",
     "vitest": "^3.0.0"
   },
   "engines": {
