@@ -6,7 +6,7 @@
     "build": "pnpm -r run build",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "test:e2e": "vitest run --project e2e"
+    "test:e2e": "vitest run --config tests/e2e/vitest.config.ts"
   },
   "devDependencies": {
     "@types/node": "^25.2.1",

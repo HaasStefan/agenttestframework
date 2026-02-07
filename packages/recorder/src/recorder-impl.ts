@@ -30,6 +30,14 @@ export class RecorderImpl {
     this._prompts.push(prompt);
   }
 
+  get totalInput(): number {
+    return this._tokenUsage.input;
+  }
+
+  get totalOutput(): number {
+    return this._tokenUsage.output;
+  }
+
   recordTokenUsage(usage: Partial<TokenUsage>): void {
     if (this._ended) {
       throw new Error('Cannot record token usage after recording has ended');
