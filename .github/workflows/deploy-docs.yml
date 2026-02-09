@@ -29,6 +29,61 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - name: Generate VitePress config
+        run: |
+          cat > docs/.vitepress/config.ts << 'EOF'
+          import { defineConfig } from 'vitepress';
+
+          export default defineConfig({
+            title: 'Agent Test Framework',
+            description: 'Test framework for CLI AI agents',
+            base: '/agenttestframework/',
+            head: [['link', { rel: 'icon', type: 'image/x-icon', href: '/agenttestframework/favicon.ico' }]],
+            themeConfig: {
+              nav: [
+                { text: 'Guide', link: '/guide/getting-started' },
+                { text: 'Recipes', link: '/recipes/skill-tests' },
+                { text: 'API', link: '/api/testbed' },
+              ],
+              sidebar: [
+                {
+                  text: 'Guide',
+                  items: [
+                    { text: 'Getting Started', link: '/guide/getting-started' },
+                    { text: 'How It Works', link: '/guide/how-it-works' },
+                    { text: 'Project Setup', link: '/guide/project-setup' },
+                  ],
+                },
+                {
+                  text: 'Recipes',
+                  items: [
+                    { text: 'Skill Tests', link: '/recipes/skill-tests' },
+                    { text: 'Prompt Tests', link: '/recipes/prompt-tests' },
+                    { text: 'Integration Tests', link: '/recipes/integration-tests' },
+                    { text: 'E2E Tests', link: '/recipes/e2e-tests' },
+                    { text: 'Multi-turn Sessions', link: '/recipes/multi-turn' },
+                    { text: 'Token Budgets', link: '/recipes/token-budgets' },
+                    { text: 'Regression Snapshots', link: '/recipes/snapshots' },
+                    { text: 'Custom Adapters', link: '/recipes/custom-adapters' },
+                  ],
+                },
+                {
+                  text: 'API Reference',
+                  items: [
+                    { text: 'TestBed', link: '/api/testbed' },
+                    { text: 'Spy', link: '/api/spy' },
+                    { text: 'Matchers', link: '/api/matchers' },
+                    { text: 'Assertions', link: '/api/assertions' },
+                    { text: 'Recording', link: '/api/recording' },
+                    { text: 'CopilotAdapter', link: '/api/copilot-adapter' },
+                    { text: 'TestRunner', link: '/api/test-runner' },
+                  ],
+                },
+              ],
+            },
+          });
+          EOF
+
       - run: pnpm docs:build
 
       - uses: actions/upload-pages-artifact@v3
