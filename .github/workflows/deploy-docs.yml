@@ -31,6 +31,7 @@ jobs:
 
       - name: Generate VitePress config
         run: |
+          mkdir -p docs/.vitepress
           cat > docs/.vitepress/config.ts << 'EOF'
           import { defineConfig } from 'vitepress';
 
